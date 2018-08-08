@@ -1,3 +1,5 @@
+const DelRules = require('DelRules');
+
 cc.Class({
   extends: cc.Component,
 
@@ -14,7 +16,62 @@ cc.Class({
 
   onLoad() {
     this.setHexagonGrid();
+    this.node.on('dropSuccess', this.deleteTile, this);
   },
+  start() {},
+  deleteTile() {
+    let fulledTilesIndex = [];
+    let readyDelTiles = [];
+    const boardFrameList = this.boardFrameList;
+    for (let i = 0; i < boardFrameList.length; i++) {
+      const boardFrame = boardFrameList[i];
+      if (boardFrame.isFulled) {
+        fulledTilesIndex.push(i);
+      }
+    }
+
+    for (let i = 0; i < DelRules.length; i++) {
+      const delRule = DelRules[i];
+      let intersectArr = this.arrIntersect(fulledTilesIndex, delRule);
+      if (intersectArr.length > 0) {
+        const isReadyDel = this.checkArrIsEqual(delRule, intersectArr);
+        if (isReadyDel) {
+          readyDelTiles.push(delRule);
+        }
+      }
+    }
+
+    for (let i = 0; i < readyDelTiles.length; i++) {
+      const readyDelTile = readyDelTiles[i];
+      for (let j = 0; j < readyDelTile.length; j++) {
+        const delTileIndex = readyDelTile[j];
+        const boardFrame = this.boardFrameList[delTileIndex];
+        const delNode = boardFrame.getChildByName('fillNode');
+        boardFrame.isFulled = false;
+        delNode.getComponent(cc.Sprite).spriteFrame = null;
+      }
+    }
+  },
+  arrIntersect(arr1, arr2) {
+    const intersectArr = [];
+    for (let i = 0; i < arr1.length; i++) {
+      for (let j = 0; j < arr2.length; j++) {
+        if (arr2[j] == arr1[i]) {
+          intersectArr.push(arr2[j]);
+        }
+      }
+    }
+    return intersectArr;
+  },
+  checkArrIsEqual: function(arr1, arr2) {
+    for (var i = 0; i < arr1.length; i++) {
+      if (arr2[i] != arr1[i]) {
+        return false;
+      }
+    }
+    return true;
+  },
+  addScore() {},
   setHexagonGrid() {
     this.hexes = [];
     this.boardFrameList = [];
@@ -51,17 +108,23 @@ cc.Class({
       node.parent = this.node;
       hexes[index].spriteFrame = node;
       this.setShadowNode(node);
+      this.setFillNode(node);
+      this.boardFrameList.push(node);
     }
   },
   setShadowNode(node) {
     const newNode = new cc.Node('frame');
-    newNode.addComponent(cc.Sprite)
+    newNode.addComponent(cc.Sprite);
     newNode.name = 'shadowNode';
     newNode.opacity = 150;
     newNode.parent = node;
-    this.boardFrameList.push(node);
   },
-  start() {}
+  setFillNode(node) {
+    const newNode = new cc.Node('frame');
+    newNode.addComponent(cc.Sprite);
+    newNode.name = 'fillNode';
+    newNode.parent = node;
+  }
 
   // update (dt) {},
 });

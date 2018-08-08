@@ -164,6 +164,34 @@ cc.Class({
     });
   },
   tileDrop() {
+    this.resetBoardFrames();
+    if (this.checkCanDrop()) {
+      const boardTiles = this.boardTiles;
+      const fillTiles = this.fillTiles;
+      const fillTilesLength = fillTiles.length;
+
+      for (let i = 0; i < fillTilesLength; i++) {
+        const boardTile = boardTiles[i];
+        const fillTile = fillTiles[i];
+        const fillNode = boardTile.getChildByName('fillNode');
+        const spriteFrame = fillTile.getComponent(cc.Sprite).spriteFrame;
+
+        boardTile.isFulled = true;
+        fillNode.getComponent(cc.Sprite).spriteFrame = spriteFrame;
+        this.resetTile();
+      }
+      this.board.node.emit('dropSuccess');
+    } else {
+      this.backSourcePos();
+    }
+  },
+  resetTile() {
+    this.node.removeAllChildren();
+    this.node.x = this.node.ox;
+    this.node.y = this.node.oy;
+    this.setTile();
+  },
+  backSourcePos() {
     this.node.scale = this.tileScale;
     this.node.x = this.node.ox;
     this.node.y = this.node.oy;
@@ -202,11 +230,11 @@ cc.Class({
   },
   checkCanDrop() {
     const boardTiles = this.boardTiles;
-    const checkTiles = this.node.children;
+    const fillTiles = this.node.children;
     const boardTilesLength = boardTiles.length;
-    const checkTilesLength = checkTiles.length;
+    const fillTilesLength = fillTiles.length;
 
-    if (boardTilesLength === 0 || boardTilesLength != checkTilesLength) {
+    if (boardTilesLength === 0 || boardTilesLength != fillTilesLength) {
       return false;
     }
 
@@ -218,22 +246,25 @@ cc.Class({
 
     return true;
   },
-  dropPrompt(canDrop) {
-    const boardTiles = this.boardTiles;
-    const boardTilesLength = boardTiles.length;
-    const checkTiles = this.node.children;
+  resetBoardFrames() {
     const boardFrameList = this.board.boardFrameList;
 
     for (let i = 0; i < boardFrameList.length; i++) {
       const shadowNode = boardFrameList[i].getChildByName('shadowNode');
       shadowNode.opacity = 0;
     }
+  },
+  dropPrompt(canDrop) {
+    const boardTiles = this.boardTiles;
+    const boardTilesLength = boardTiles.length;
+    const fillTiles = this.fillTiles;
 
+    this.resetBoardFrames();
     if (canDrop) {
       for (let i = 0; i < boardTilesLength; i++) {
         const shadowNode = boardTiles[i].getChildByName('shadowNode');
         shadowNode.opacity = 100;
-        const spriteFrame = checkTiles[i].getComponent(cc.Sprite).spriteFrame;
+        const spriteFrame = fillTiles[i].getComponent(cc.Sprite).spriteFrame;
         shadowNode.getComponent(cc.Sprite).spriteFrame = spriteFrame;
       }
     }
