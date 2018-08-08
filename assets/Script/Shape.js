@@ -136,7 +136,7 @@ cc.Class({
       node.parent = this.node;
     }
   },
-  addTouchEvent: function() {
+  addTouchEvent() {
     this.node.on('touchstart', event => {
       this.node.setScale(1);
       this.node.children.forEach(child => {
@@ -180,6 +180,7 @@ cc.Class({
         fillNode.getComponent(cc.Sprite).spriteFrame = spriteFrame;
         this.resetTile();
       }
+      this.board.curTileLength = fillTiles.length;
       this.board.node.emit('dropSuccess');
     } else {
       this.backSourcePos();

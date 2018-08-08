@@ -1,4 +1,5 @@
 const DelRules = require('DelRules');
+let theScore = 0;
 
 cc.Class({
   extends: cc.Component,
@@ -23,6 +24,9 @@ cc.Class({
     let fulledTilesIndex = [];
     let readyDelTiles = [];
     const boardFrameList = this.boardFrameList;
+
+    this.addScore(this.curTileLength, true);
+
     for (let i = 0; i < boardFrameList.length; i++) {
       const boardFrame = boardFrameList[i];
       if (boardFrame.isFulled) {
@@ -41,6 +45,7 @@ cc.Class({
       }
     }
 
+    let count = 0;
     for (let i = 0; i < readyDelTiles.length; i++) {
       const readyDelTile = readyDelTiles[i];
       for (let j = 0; j < readyDelTile.length; j++) {
@@ -50,7 +55,11 @@ cc.Class({
         boardFrame.isFulled = false;
         delNode.getComponent(cc.Sprite).spriteFrame = null;
       }
+      count++;
     }
+
+    this.checkLose();
+    this.addScore(count);
   },
   arrIntersect(arr1, arr2) {
     const intersectArr = [];
@@ -71,7 +80,19 @@ cc.Class({
     }
     return true;
   },
-  addScore() {},
+  addScore(count, isDropAdd) {
+    var addScoreCount = this.scoreRule(count, isDropAdd);
+    var node = cc.find('Canvas/score');
+    var label = node.getComponent(cc.Label);
+    label.string = addScoreCount + Number(label.string);
+    theScore = Number(label.string);
+  },
+  scoreRule: function(count, isDropAdd) {
+    var x = count + 1;
+    var addScoreCount = isDropAdd ? x : 2 * x * x; //数量的平方
+    return addScoreCount;
+  },
+  checkLose() {},
   setHexagonGrid() {
     this.hexes = [];
     this.boardFrameList = [];
