@@ -1,4 +1,6 @@
-const DelRules = require('DelRules');
+import { DelRules } from 'Config';
+import _ from './util/Util';
+
 let theScore = 0;
 
 cc.Class({
@@ -24,7 +26,7 @@ cc.Class({
     let fulledTilesIndex = [];
     let readyDelTiles = [];
     const boardFrameList = this.boardFrameList;
-
+    this.isDeleting = true;
     this.addScore(this.curTileLength, true);
 
     for (let i = 0; i < boardFrameList.length; i++) {
@@ -36,9 +38,9 @@ cc.Class({
 
     for (let i = 0; i < DelRules.length; i++) {
       const delRule = DelRules[i];
-      let intersectArr = this.arrIntersect(fulledTilesIndex, delRule);
+      let intersectArr = _.arrIntersect(fulledTilesIndex, delRule);
       if (intersectArr.length > 0) {
-        const isReadyDel = this.checkArrIsEqual(delRule, intersectArr);
+        const isReadyDel = _.checkArrIsEqual(delRule, intersectArr);
         if (isReadyDel) {
           readyDelTiles.push(delRule);
         }
@@ -58,28 +60,14 @@ cc.Class({
       count++;
     }
 
-    this.checkLose();
-    this.addScore(count);
-  },
-  arrIntersect(arr1, arr2) {
-    const intersectArr = [];
-    for (let i = 0; i < arr1.length; i++) {
-      for (let j = 0; j < arr2.length; j++) {
-        if (arr2[j] == arr1[i]) {
-          intersectArr.push(arr2[j]);
-        }
-      }
+    if (count !== 0) {
+      this.addScore(count);
+      this.checkLose();
     }
-    return intersectArr;
+
+    this.isDeleting = false;
   },
-  checkArrIsEqual: function(arr1, arr2) {
-    for (var i = 0; i < arr1.length; i++) {
-      if (arr2[i] != arr1[i]) {
-        return false;
-      }
-    }
-    return true;
-  },
+
   addScore(count, isDropAdd) {
     var addScoreCount = this.scoreRule(count, isDropAdd);
     var node = cc.find('Canvas/score');
@@ -89,10 +77,36 @@ cc.Class({
   },
   scoreRule: function(count, isDropAdd) {
     var x = count + 1;
-    var addScoreCount = isDropAdd ? x : 2 * x * x; //数量的平方
+    var addScoreCount = isDropAdd ? x : 2 * x * x;
     return addScoreCount;
   },
-  checkLose() {},
+  checkLose() {
+    if (this.isDeleting) return;
+
+    const fillTiles = this.node.parent.getChildByName('TileContainer').children;
+    const fillTilesLength = fillTiles.length;
+    let count = 0;
+
+    for (let i = 0; i < fillTilesLength; i++) {
+      const fillTile = fillTiles[i];
+      const fillTileScript = fillTile.getComponent('Shape');
+      if (fillTileScript.checkLose()) {
+        count++;
+        fillTile.opacity = 125;
+      } else {
+        fillTile.opacity = 255;
+      }
+    }
+    if (count === 3) {
+      // const Lose = this.node.parent.getChildByName('Lose');
+      // Lose.active = true;
+      alert('You Failed');
+      const oldScore = cc.sys.localStorage.getItem('score');
+      if (oldScore < theScore) {
+        cc.sys.localStorage.setItem('score', theScore);
+      }
+    }
+  },
   setHexagonGrid() {
     this.hexes = [];
     this.boardFrameList = [];

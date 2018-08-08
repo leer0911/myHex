@@ -1,9 +1,10 @@
-const Board = require('Board');
+import Board from 'Board';
+import { Tiles } from 'Config';
+
 const getRandomInt = function(min, max) {
   let ratio = cc.random0To1();
   return min + Math.floor((max - min) * ratio);
 };
-
 cc.Class({
   extends: cc.Component,
 
@@ -47,59 +48,7 @@ cc.Class({
     this.addTouchEvent();
   },
   setTile() {
-    this.tiles = [
-      {
-        type: 1,
-        list: [[[0, 0]]]
-      },
-      {
-        type: 2,
-        list: [
-          [[1, -1], [0, 0], [1, 0], [0, 1]],
-          [[0, 0], [1, 0], [-1, 1], [0, 1]],
-          [[0, 0], [1, 0], [0, 1], [1, 1]]
-        ]
-      },
-      {
-        type: 3,
-        list: [
-          [[0, -1], [0, 0], [0, 1], [0, 2]],
-          [[0, 0], [1, -1], [-1, 1], [-2, 2]],
-          [[-1, 0], [0, 0], [1, 0], [2, 0]]
-        ]
-      },
-      {
-        type: 4,
-        list: [
-          [[0, 0], [0, 1], [0, -1], [-1, 0]],
-          [[0, 0], [0, -1], [1, -1], [-1, 1]],
-          [[0, 0], [0, 1], [0, -1], [1, 0]],
-          [[0, 0], [1, 0], [-1, 0], [1, -1]],
-          [[0, 0], [1, 0], [-1, 0], [-1, 1]]
-        ]
-      },
-      {
-        type: 5,
-        list: [
-          [[0, 0], [0, 1], [0, -1], [1, -1]],
-          [[0, 0], [1, -1], [-1, 1], [-1, 0]],
-          [[0, 0], [1, -1], [-1, 1], [1, 0]],
-          [[0, 0], [1, 0], [-1, 0], [0, -1]],
-          [[0, 0], [1, 0], [-1, 0], [0, 1]]
-        ]
-      },
-      {
-        type: 6,
-        list: [
-          [[0, -1], [-1, 0], [-1, 1], [0, 1]],
-          [[-1, 0], [0, -1], [1, -1], [1, 0]],
-          [[0, -1], [1, -1], [1, 0], [0, 1]],
-          [[-1, 1], [0, 1], [1, 0], [1, -1]],
-          [[-1, 0], [-1, 1], [0, -1], [1, -1]],
-          [[-1, 0], [-1, 1], [0, 1], [1, 0]]
-        ]
-      }
-    ];
+    this.tiles = Tiles;
 
     const hexData = this.random();
 
@@ -184,6 +133,42 @@ cc.Class({
       this.board.node.emit('dropSuccess');
     } else {
       this.backSourcePos();
+    }
+    this.board.checkLose();
+  },
+  checkLose() {
+    let canDropCount = 0;
+    const tiles = this.node.children;
+    const tilesLength = tiles.length;
+    const boardFrameList = this.board.boardFrameList;
+    const boardFrameListLength = boardFrameList.length;
+
+    for (let i = 0; i < boardFrameListLength; i++) {
+      const frameNode = boardFrameList[i];
+      let srcPos = cc.p(frameNode.x, frameNode.y);
+      let count = 0;
+      if (!frameNode.isFulled) {
+        for (let j = 0; j < tilesLength; j++) {
+          let len = 27;
+          let childPos = cc.pAdd(srcPos, cc.p(tiles[j].x, tiles[j].y));
+          for (let k = 0; k < boardFrameListLength; k++) {
+            let tFrameNode = boardFrameList[k];
+            let dis = cc.pDistance(cc.p(tFrameNode.x, tFrameNode.y), childPos);
+            if (dis <= len && !tFrameNode.isFulled) {
+              count++;
+            }
+          }
+        }
+        if (count === tilesLength) {
+          canDropCount++;
+        }
+      }
+    }
+
+    if (canDropCount === 0) {
+      return true;
+    } else {
+      return false;
     }
   },
   resetTile() {
