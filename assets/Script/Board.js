@@ -20,6 +20,10 @@ cc.Class({
   onLoad() {
     this.setHexagonGrid();
     this.node.on('dropSuccess', this.deleteTile, this);
+    const oldScore = cc.sys.localStorage.getItem('score');
+    let node = cc.find('Canvas/OldScore');
+    let label = node.getComponent(cc.Label);
+    label.string = Number(oldScore);
   },
   start() {},
   deleteTile() {
@@ -55,9 +59,13 @@ cc.Class({
         const boardFrame = this.boardFrameList[delTileIndex];
         const delNode = boardFrame.getChildByName('fillNode');
         boardFrame.isFulled = false;
-        delNode.getComponent(cc.Sprite).spriteFrame = null;
+        const finished = cc.callFunc(() => {
+          delNode.getComponent(cc.Sprite).spriteFrame = null;
+          delNode.opacity = 255;
+          count++;
+        }, this);
+        delNode.runAction(cc.sequence(cc.fadeOut(0.3), finished));
       }
-      count++;
     }
 
     if (count !== 0) {
@@ -69,15 +77,15 @@ cc.Class({
   },
 
   addScore(count, isDropAdd) {
-    var addScoreCount = this.scoreRule(count, isDropAdd);
-    var node = cc.find('Canvas/score');
-    var label = node.getComponent(cc.Label);
+    let addScoreCount = this.scoreRule(count, isDropAdd);
+    let node = cc.find('Canvas/Score');
+    let label = node.getComponent(cc.Label);
     label.string = addScoreCount + Number(label.string);
     theScore = Number(label.string);
   },
   scoreRule: function(count, isDropAdd) {
-    var x = count + 1;
-    var addScoreCount = isDropAdd ? x : 2 * x * x;
+    let x = count + 1;
+    let addScoreCount = isDropAdd ? x : 2 * x * x;
     return addScoreCount;
   },
   checkLose() {
@@ -100,11 +108,11 @@ cc.Class({
     if (count === 3) {
       // const Lose = this.node.parent.getChildByName('Lose');
       // Lose.active = true;
-      alert('You Failed');
       const oldScore = cc.sys.localStorage.getItem('score');
       if (oldScore < theScore) {
         cc.sys.localStorage.setItem('score', theScore);
       }
+      alert('You Failed');
     }
   },
   setHexagonGrid() {

@@ -1,6 +1,5 @@
 import Board from 'Board';
 import { Tiles } from 'Config';
-
 const getRandomInt = function(min, max) {
   let ratio = cc.random0To1();
   return min + Math.floor((max - min) * ratio);
@@ -62,8 +61,8 @@ cc.Class({
     this.node.oy = this.node.y;
   },
   random: function() {
-    const shape = this.tiles[getRandomInt(0, this.tiles.length - 1)];
-    const list = shape.list[getRandomInt(0, shape.list.length - 1)];
+    const shape = this.tiles[getRandomInt(0, this.tiles.length)];
+    const list = shape.list[getRandomInt(0, shape.list.length)];
     return {
       type: shape.type,
       list: list
@@ -204,7 +203,7 @@ cc.Class({
     }
   },
   checkDistance(pos) {
-    const distance = 20;
+    const distance = 50;
     const boardFrameList = this.board.boardFrameList;
     for (let i = 0; i < boardFrameList.length; i++) {
       const frameNode = boardFrameList[i];
