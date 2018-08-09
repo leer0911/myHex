@@ -106,14 +106,17 @@ cc.Class({
       }
     }
     if (count === 3) {
-      // const Lose = this.node.parent.getChildByName('Lose');
-      // Lose.active = true;
       const oldScore = cc.sys.localStorage.getItem('score');
       if (oldScore < theScore) {
         cc.sys.localStorage.setItem('score', theScore);
       }
-      alert('You Failed');
+      this.gameOver();
     }
+  },
+  gameOver() {
+    const Failed = cc.find('Canvas/Failed');
+    Failed.active = true;
+    Failed.runAction(cc.fadeIn(0.3));
   },
   setHexagonGrid() {
     this.hexes = [];

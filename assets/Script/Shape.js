@@ -90,6 +90,8 @@ cc.Class({
       this.node.children.forEach(child => {
         child.setScale(0.8);
       });
+      // this.boardTiles = [];
+      // this.fillTiles = [];
     });
     this.node.on('touchmove', event => {
       const { x, y } = event.touch.getDelta();
@@ -190,10 +192,6 @@ cc.Class({
     this.fillTiles = [];
     for (let i = 0; i < tiles.length; i++) {
       const tile = tiles[i];
-      const offsetPos = cc.pAdd(
-        cc.v2(this.node.ox, this.node.oy),
-        tile.position
-      );
       const pos = cc.pAdd(this.node.position, tile.position);
       const boardTile = this.checkDistance(pos);
       if (boardTile) {
