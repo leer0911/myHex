@@ -8,12 +8,14 @@ cc.Class({
   extends: cc.Component,
 
   properties: {
-    tileH: 122,
-    tileScale: 0.7,
+    tileH: 122, // 方块六边形高度
+    tileScale: 0.7, // 方块默认缩放值，用于点击后放大效果
     board: {
+      // 获取棋盘节点访问
       default: null,
       type: Board
     },
+    // 以下为各方块类型图片
     type1: {
       default: null,
       type: cc.SpriteFrame
@@ -60,7 +62,7 @@ cc.Class({
     this.node.ox = this.node.x;
     this.node.oy = this.node.y;
   },
-  random: function() {
+  random() {
     const shape = this.tiles[getRandomInt(0, this.tiles.length)];
     const list = shape.list[getRandomInt(0, shape.list.length)];
     return {
@@ -90,14 +92,15 @@ cc.Class({
       this.node.children.forEach(child => {
         child.setScale(0.8);
       });
-      // this.boardTiles = [];
-      // this.fillTiles = [];
+      this.boardTiles = [];
+      this.fillTiles = [];
     });
     this.node.on('touchmove', event => {
       const { x, y } = event.touch.getDelta();
 
       this.node.x += x;
       this.node.y += y;
+      // 方块与棋盘的触碰检测，并返回重合的部分。
       this.checkCollision(event);
 
       if (this.checkCanDrop()) {
@@ -126,11 +129,16 @@ cc.Class({
         const fillNode = boardTile.getChildByName('fillNode');
         const spriteFrame = fillTile.getComponent(cc.Sprite).spriteFrame;
 
+        // 棋盘存在方块的标识设置
         boardTile.isFulled = true;
         fillNode.getComponent(cc.Sprite).spriteFrame = spriteFrame;
+        // 落子成功后重置方块
         this.resetTile();
       }
+
+      // 这里棋盘需要访问当前方块的六边形总数
       this.board.curTileLength = fillTiles.length;
+      // 触发落入成功的事件
       this.board.node.emit('dropSuccess');
     } else {
       this.backSourcePos();
@@ -144,22 +152,29 @@ cc.Class({
     const boardFrameList = this.board.boardFrameList;
     const boardFrameListLength = boardFrameList.length;
 
+    // TODO: 存在无效检测的情况，可优化
     for (let i = 0; i < boardFrameListLength; i++) {
-      const frameNode = boardFrameList[i];
-      let srcPos = cc.p(frameNode.x, frameNode.y);
+      const boardNode = boardFrameList[i];
+      let srcPos = cc.p(boardNode.x, boardNode.y);
       let count = 0;
-      if (!frameNode.isFulled) {
+      if (!boardNode.isFulled) {
+        // 过滤出未填充的棋盘格子
         for (let j = 0; j < tilesLength; j++) {
-          let len = 27;
-          let childPos = cc.pAdd(srcPos, cc.p(tiles[j].x, tiles[j].y));
+          let len = 27; // 设定重合判定最小间距
+
+          // 将方块移到未填充的棋盘格子原点，并获取当前各方块坐标值
+          let tilePos = cc.pAdd(srcPos, cc.p(tiles[j].x, tiles[j].y));
+
+          // 遍历棋盘格子，判断方块中各六边形是否可以放入
           for (let k = 0; k < boardFrameListLength; k++) {
-            let tFrameNode = boardFrameList[k];
-            let dis = cc.pDistance(cc.p(tFrameNode.x, tFrameNode.y), childPos);
-            if (dis <= len && !tFrameNode.isFulled) {
+            const boardNode = boardFrameList[k];
+            let dis = cc.pDistance(cc.p(boardNode.x, boardNode.y), tilePos);
+            if (dis <= len && !boardNode.isFulled) {
               count++;
             }
           }
         }
+
         if (count === tilesLength) {
           canDropCount++;
         }
@@ -188,8 +203,8 @@ cc.Class({
   },
   checkCollision(event) {
     const tiles = this.node.children;
-    this.boardTiles = [];
-    this.fillTiles = [];
+    this.boardTiles = []; // 保存棋盘与方块重合部分。
+    this.fillTiles = []; // 保存方块当前重合的部分。
     for (let i = 0; i < tiles.length; i++) {
       const tile = tiles[i];
       const pos = cc.pAdd(this.node.position, tile.position);
@@ -212,15 +227,17 @@ cc.Class({
     }
   },
   checkCanDrop() {
-    const boardTiles = this.boardTiles;
-    const fillTiles = this.node.children;
+    const boardTiles = this.boardTiles; // 当前棋盘与方块重合部分。
+    const fillTiles = this.node.children; // 当前拖拽的方块总数。
     const boardTilesLength = boardTiles.length;
     const fillTilesLength = fillTiles.length;
 
+    // 如果当前棋盘与方块重合部分为零以及与方块数目不一致，则判定为不能落子。
     if (boardTilesLength === 0 || boardTilesLength != fillTilesLength) {
       return false;
     }
 
+    // 如果方块内以及存在方块，则判定为不能落子。
     for (let i = 0; i < boardTilesLength; i++) {
       if (this.boardTiles[i].isFulled) {
         return false;

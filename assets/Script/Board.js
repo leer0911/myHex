@@ -7,32 +7,37 @@ cc.Class({
   extends: cc.Component,
 
   properties: {
-    hexSide: 5,
-    tileH: 110,
+    hexSide: 5, // 需要生成的六边形布局的边界个数
+    tileH: 110, // 六边形高度
     tilePic: {
+      // 棋盘背景
       default: null,
       type: cc.SpriteFrame
     }
   },
 
   // LIFE-CYCLE CALLBACKS:
-
+  start() {},
   onLoad() {
     this.setHexagonGrid();
     this.node.on('dropSuccess', this.deleteTile, this);
+    this.getOldScore();
+  },
+  // Methods
+  getOldScore() {
     const oldScore = cc.sys.localStorage.getItem('score');
     let node = cc.find('Canvas/OldScore');
     let label = node.getComponent(cc.Label);
     label.string = Number(oldScore);
   },
-  start() {},
   deleteTile() {
-    let fulledTilesIndex = [];
-    let readyDelTiles = [];
+    let fulledTilesIndex = []; // 存储棋盘内有方块的的索引
+    let readyDelTiles = []; // 存储待消除方块
     const boardFrameList = this.boardFrameList;
-    this.isDeleting = true;
+    this.isDeleting = true; // 方块正在消除的标识，用于后期添加动画时，充当异步状态锁
     this.addScore(this.curTileLength, true);
 
+    // 首先获取棋盘内存在方块的格子信息
     for (let i = 0; i < boardFrameList.length; i++) {
       const boardFrame = boardFrameList[i];
       if (boardFrame.isFulled) {
@@ -41,9 +46,11 @@ cc.Class({
     }
 
     for (let i = 0; i < DelRules.length; i++) {
-      const delRule = DelRules[i];
+      const delRule = DelRules[i]; // 消除规则获取
+      // 逐一获取规则数组与存在方块格子数组的交集
       let intersectArr = _.arrIntersect(fulledTilesIndex, delRule);
       if (intersectArr.length > 0) {
+        // 判断两数组是否相同，相同则将方块添加到待消除数组里
         const isReadyDel = _.checkArrIsEqual(delRule, intersectArr);
         if (isReadyDel) {
           readyDelTiles.push(delRule);
@@ -51,6 +58,7 @@ cc.Class({
       }
     }
 
+    // 开始消除
     let count = 0;
     for (let i = 0; i < readyDelTiles.length; i++) {
       const readyDelTile = readyDelTiles[i];
@@ -59,6 +67,8 @@ cc.Class({
         const boardFrame = this.boardFrameList[delTileIndex];
         const delNode = boardFrame.getChildByName('fillNode');
         boardFrame.isFulled = false;
+
+        // 这里可以添加相应消除动画
         const finished = cc.callFunc(() => {
           delNode.getComponent(cc.Sprite).spriteFrame = null;
           delNode.opacity = 255;
@@ -83,7 +93,8 @@ cc.Class({
     label.string = addScoreCount + Number(label.string);
     theScore = Number(label.string);
   },
-  scoreRule: function(count, isDropAdd) {
+  scoreRule(count, isDropAdd) {
+    // 规则你定!
     let x = count + 1;
     let addScoreCount = isDropAdd ? x : 2 * x * x;
     return addScoreCount;
@@ -97,7 +108,7 @@ cc.Class({
 
     for (let i = 0; i < fillTilesLength; i++) {
       const fillTile = fillTiles[i];
-      const fillTileScript = fillTile.getComponent('Shape');
+      const fillTileScript = fillTile.getComponent('Shape'); // 直接获取方块节点下的脚本组件
       if (fillTileScript.checkLose()) {
         count++;
         fillTile.opacity = 125;
@@ -122,6 +133,7 @@ cc.Class({
     this.hexes = [];
     this.boardFrameList = [];
     this.hexSide--;
+    // 棋盘六角网格布局，坐标系存储方法
     for (let q = -this.hexSide; q <= this.hexSide; q++) {
       let r1 = Math.max(-this.hexSide, -q - this.hexSide);
       let r2 = Math.min(this.hexSide, -q + this.hexSide);
@@ -139,6 +151,7 @@ cc.Class({
     });
   },
   hex2pixel(hex, h) {
+    // 棋盘六角网格，坐标系转换像素方法
     let size = h / 2;
     let x = size * Math.sqrt(3) * (hex.q + hex.r / 2);
     let y = ((size * 3) / 2) * hex.r;
@@ -155,6 +168,7 @@ cc.Class({
       hexes[index].spriteFrame = node;
       this.setShadowNode(node);
       this.setFillNode(node);
+      // 保存当前棋盘格子的信息，用于后面落子判定及消除逻辑等。
       this.boardFrameList.push(node);
     }
   },
